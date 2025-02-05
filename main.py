@@ -1,3 +1,4 @@
+import streamlit as st
 import requests
 import json
 from bs4 import BeautifulSoup as bs
@@ -43,24 +44,39 @@ if not all_quotes:
 
 # this part of code do the game
 
-quote = choice(all_quotes)
-remaining_guesses = 3
-print(f'Here is a quote: {quote['text']}')
+if 'quote' not in st.session_state:
+    st.session_state.quote = choice(all_quotes)
+    st.session_state.remaining_guesses = 3
+if 'user_guess' not in st.session_state:
+    st.session_state.user_guess = ''
 
-while remaining_guesses > 0:
-    guess = input(f'Who said this quote? Guesses remaining: {remaining_guesses} : ')
+title = "Guess the Quote Game 🎭"
+st.title(title)
+st.write(f"Here is a quote: **{st.session_state.quote['text']}**")
 
-    if guess.lower() == quote['author'].lower():
-        print('You got it right')
-        break
-    remaining_guesses -= 1
+guess = st.text_input(f'Who said this quote? Guesses remaining: {st.session_state.remaining_guesses} : ', value=st.session_state.user_guess, key='guess_input')
 
-    if remaining_guesses == 2:
-        print(f'Here is a hint: The author was born on {quote['birth_date']} {quote['birth_place']}')
+if guess:
+        if guess.lower() == st.session_state.quote['author'].lower():
+            st.success('🎉 You got it right')
+            st.session_state.quote = choice(all_quotes)
+            st.session_state.remaining_guesses = 3
+            st.session_state.user_guess = ''
+            st.rerun()
+        else:
+            st.session_state.remaining_guesses -= 1
+            # st.session_state.user_guess = ''
 
-    elif remaining_guesses == 1:
-        r1 = quote['author'].split(' ')[1][0:]
-        print(f'Here is a hint: The author last name is {r1}')
+            if st.session_state.remaining_guesses == 2:
+                st.warning(f'Here is a hint: The author was born on {st.session_state.quote['birth_date']} {st.session_state.quote['birth_place']}')
 
-if remaining_guesses == 0 :
-    print(f'Sorry you ran out of guesses. The answer was {quote['author']}')
+            elif st.session_state.remaining_guesses == 1:
+                r1 = st.session_state.quote['author'].split(' ')[1][0:]
+                st.warning(f'Here is a hint: The author last name is {r1}')
+            elif st.session_state.remaining_guesses == 0 :
+                st.error(f'❌ Sorry you ran out of guesses. The answer was {st.session_state.quote['author']}')
+                st.session_state.quote = choice(all_quotes)
+                st.session_state.remaining_guesses = 3
+
+            st.session_state.user_guess = ''
+            st.rerun()
